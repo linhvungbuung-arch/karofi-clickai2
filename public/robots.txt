@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://karofi-clickai.vercel.app/sitemap.xml
