@@ -1,11 +1,26 @@
-<div align="center">
+# Karofi Platinum S6 - Landing Page
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+A high-conversion landing page for the Karofi Platinum S6 water purifier, featuring real-time order synchronization with Google Sheets.
 
-  <h1>Built with AI Studio</h2>
+## 🚀 Features
+- **Modern UI/UX**: Built with React 19, Tailwind CSS 4, and Framer Motion.
+- **Responsive Design**: Optimized for all devices (Mobile, Tablet, Desktop).
+- **Google Sheets Integration**: Orders are automatically synced to Google Sheets via Google Apps Script.
+- **Vercel Ready**: Optimized configuration for deployment on Vercel.
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## 🛠️ Tech Stack
+- **Frontend**: React 19, Vite, Tailwind CSS 4.
+- **Animations**: Framer Motion.
+- **Icons**: Lucide React.
+- **Backend Sync**: Google Apps Script.
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## ⚙️ Setup
+1. Clone the repository.
+2. Install dependencies: `npm install`.
+3. Set up your environment variables in `.env`:
+   - `VITE_GOOGLE_SCRIPT_URL`: Your Google Apps Script Web App URL.
+4. Run development server: `npm run dev`.
+5. Build for production: `npm run build`.
 
-</div>
+## 📦 Deployment
+This project is pre-configured for **Vercel**. Simply connect your GitHub repository to Vercel and it will automatically deploy.
