@@ -77,6 +77,8 @@ function AppContent() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<"UNPAID" | "PAID">("UNPAID");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -94,6 +96,43 @@ function AppContent() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (isSubmitted && orderId && paymentStatus === "UNPAID") {
+      setIsCheckingPayment(true);
+      let count = 0;
+      const maxChecks = 60; // 3 minutes / 3 seconds = 60 checks
+
+      interval = setInterval(async () => {
+        count++;
+        if (count > maxChecks) {
+          clearInterval(interval);
+          setIsCheckingPayment(false);
+          return;
+        }
+
+        try {
+          const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwpTNHcVU82d6DJ0G5M-nj-rTR5_YE0wH2kqyLlSDIb5sSvkg3ROclyor120uiwz-c/exec";
+          const response = await fetch(`${scriptUrl}?orderId=${orderId}`);
+          const data = await response.json();
+
+          if (data.result === "success" && data.status === "PAID") {
+            setPaymentStatus("PAID");
+            clearInterval(interval);
+            setIsCheckingPayment(false);
+          }
+        } catch (error) {
+          console.error("Error checking payment:", error);
+        }
+      }, 3000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isSubmitted, orderId, paymentStatus]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -102,7 +141,7 @@ function AppContent() {
     setOrderId(newOrderId);
 
     try {
-      const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbzwRE_q0tzHoyoZRt59bEV4AHaNJz-iHTu18DpDtwytpR-5k5B73dOkH3KDZaP2agG-/exec";
+      const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwpTNHcVU82d6DJ0G5M-nj-rTR5_YE0wH2kqyLlSDIb5sSvkg3ROclyor120uiwz-c/exec";
       
       if (scriptUrl) {
         await fetch(scriptUrl, {
@@ -717,11 +756,36 @@ function AppContent() {
                     </p>
                   </div>
 
+                  {isCheckingPayment && (
+                    <div className="flex items-center justify-center gap-2 text-blue-600 font-medium mb-6 animate-pulse">
+                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      Hệ thống đang kiểm tra thanh toán...
+                    </div>
+                  )}
+
+                  {paymentStatus === "PAID" && (
+                    <div className="space-y-4 mb-6">
+                      <div className="bg-green-50 text-green-700 p-4 rounded-xl font-bold flex items-center justify-center gap-2">
+                        <CheckCircle2 className="w-5 h-5" />
+                        Thanh toán thành công!
+                      </div>
+                      <a 
+                        href="https://zalo.me/g/ohttzh303" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-full bg-[#0068ff] hover:bg-[#0052cc] text-white rounded-xl h-12 font-bold shadow-lg shadow-blue-200 flex items-center justify-center transition-colors"
+                      >
+                        Tham gia nhóm Zalo chăm sóc đặc biệt
+                      </a>
+                    </div>
+                  )}
+
                   <Button 
                     onClick={() => {
                       setIsSubmitted(false);
                       setIsCheckoutOpen(false);
                       setFormData({ name: "", email: "", phone: "", address: "" });
+                      setPaymentStatus("UNPAID");
                     }}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-12 font-bold"
                   >
