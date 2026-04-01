@@ -76,12 +76,18 @@ function AppContent() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderId, setOrderId] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     address: ""
   });
+
+  const generateOrderId = () => {
+    const randomNum = Math.floor(100000 + Math.random() * 900000);
+    return `KA${randomNum}`;
+  };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -92,27 +98,28 @@ function AppContent() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const newOrderId = generateOrderId();
+    setOrderId(newOrderId);
+
     try {
-      // Use the provided Google Apps Script Web App URL
-      const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbxE_lyFBvtQS8QmQwN4Dn8SYPFuagE-s9z8BgHGuW7Q7Es81MH-oJdZKixke-Wrww/exec";
+      const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbzwRE_q0tzHoyoZRt59bEV4AHaNJz-iHTu18DpDtwytpR-5k5B73dOkH3KDZaP2agG-/exec";
       
       if (scriptUrl) {
         await fetch(scriptUrl, {
           method: "POST",
-          mode: "no-cors", // Required for Google Apps Script
+          mode: "no-cors",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            ...formData,
+            orderId: newOrderId,
+            timestamp: new Date().toLocaleString("vi-VN")
+          }),
         });
       }
 
       setIsSubmitted(true);
-      setTimeout(() => {
-        setIsSubmitted(false);
-        setIsCheckoutOpen(false);
-        setFormData({ name: "", email: "", phone: "", address: "" });
-      }, 3000);
     } catch (error) {
       console.error("Error submitting form:", error);
       alert("Có lỗi xảy ra khi gửi đơn hàng. Vui lòng thử lại.");
@@ -682,16 +689,44 @@ function AppContent() {
               </button>
 
               {isSubmitted ? (
-                <div className="p-12 text-center">
+                <div className="p-8 text-center">
                   <motion.div 
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-6"
+                    className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-4"
                   >
-                    <CheckCircle2 className="w-10 h-10" />
+                    <CheckCircle2 className="w-8 h-8" />
                   </motion.div>
                   <h3 className="text-2xl font-bold text-blue-950 mb-2">Đặt hàng thành công!</h3>
-                  <p className="text-blue-900/70">Cảm ơn bạn đã tin tưởng Karofi. Chúng tôi sẽ liên hệ với bạn sớm nhất để xác nhận đơn hàng.</p>
+                  <p className="text-blue-900/70 text-sm mb-6">Mã đơn hàng của bạn: <span className="font-bold text-blue-600">{orderId}</span></p>
+                  
+                  <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 mb-6">
+                    <p className="text-sm font-bold text-blue-900 mb-4 uppercase tracking-wider">Quét mã QR để thanh toán</p>
+                    <div className="bg-white p-4 rounded-xl shadow-sm inline-block mb-4">
+                      {/* Using SePay dynamic image generator */}
+                      <img 
+                        src={`https://qr.sepay.vn/img?acc=962476666688888&bank=BIDV&amount=19000&des=${orderId}&template=compact`}
+                        alt="Payment QR Code"
+                        className="w-48 h-48 object-contain"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <p className="text-xs text-blue-900/60 leading-relaxed">
+                      Vui lòng giữ nguyên nội dung chuyển khoản: <br/>
+                      <span className="font-bold text-blue-700">{orderId}</span>
+                    </p>
+                  </div>
+
+                  <Button 
+                    onClick={() => {
+                      setIsSubmitted(false);
+                      setIsCheckoutOpen(false);
+                      setFormData({ name: "", email: "", phone: "", address: "" });
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-12 font-bold"
+                  >
+                    Hoàn tất
+                  </Button>
                 </div>
               ) : (
                 <div className="flex flex-col">
@@ -710,7 +745,7 @@ function AppContent() {
                         </div>
                         <div className="flex-grow">
                           <div className="text-sm text-blue-100 font-medium">Karofi Platinum S6</div>
-                          <div className="text-xl font-bold">21.990.000 VNĐ</div>
+                          <div className="text-xl font-bold">19.000 đ</div>
                         </div>
                       </div>
                     </div>
